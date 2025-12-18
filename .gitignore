@@ -190,3 +190,27 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Environment variables
+.env
+**/.env
+*.json
+credentials.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
