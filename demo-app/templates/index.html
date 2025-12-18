@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardianAI Demo - LLM Security Monitoring</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .scenario-card:hover {
+            transform: translateY(-2px);
+            transition: transform 0.2s;
+        }
+        .message {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6">
+                <h1 class="text-3xl font-bold">🛡️ GuardianAI Demo</h1>
+                <p class="text-blue-100 mt-2">Enterprise LLM Security Monitoring - Live Attack Simulation</p>
+            </div>
+        </header>
+
+        <div class="container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left: Chat Interface -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-lg shadow-md">
+                        <div class="border-b border-gray-200 p-4">
+                            <h2 class="text-xl font-semibold text-gray-800">💬 Chat with Gemini Pro</h2>
+                            <p class="text-sm text-gray-600 mt-1">All interactions are monitored for security threats</p>
+                        </div>
+                        
+                        <!-- Chat Messages -->
+                        <div id="chat-messages" class="h-96 overflow-y-auto p-4 space-y-4">
+                            <div class="text-center text-gray-500 py-8">
+                                <p>Start chatting or simulate an attack scenario</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Input -->
+                        <div class="border-t border-gray-200 p-4">
+                            <form id="chat-form" class="flex gap-2">
+                                <input
+                                    type="text"
+                                    id="prompt-input"
+                                    placeholder="Type your message..."
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
+                                <button
+                                    type="submit"
+                                    id="send-btn"
+                                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                >
+                                    Send
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div id="status-bar" class="mt-4 p-4 rounded-lg hidden">
+                        <p id="status-text" class="text-sm"></p>
+                    </div>
+                </div>
+
+                <!-- Right: Attack Scenarios -->
+                <div>
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">⚠️ Attack Scenarios</h2>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Click to simulate security threats and see GuardianAI detection in action
+                        </p>
+                        
+                        <div class="space-y-3">
+                            {% for key, scenario in scenarios.items() %}
+                            <button
+                                class="scenario-card w-full text-left p-4 rounded-lg border-2 border-gray-200 hover:border-red-500 hover:shadow-md transition-all"
+                                onclick="simulateAttack('{{ key }}')"
+                            >
+                                <h3 class="font-semibold text-gray-800">{{ scenario.name }}</h3>
+                                <p class="text-xs text-gray-600 mt-1">{{ scenario.description }}</p>
+                            </button>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                            <h3 class="font-semibold text-blue-800 text-sm mb-2">📊 Monitoring Active</h3>
+                            <ul class="text-xs text-blue-700 space-y-1">
+                                <li>✓ Threat detection enabled</li>
+                                <li>✓ PII scanning active</li>
+                                <li>✓ Cost tracking live</li>
+                                <li>✓ Quality analysis on</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <a
+                                href="http://localhost:3000/dashboard"
+                                target="_blank"
+                                class="block text-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg hover:from-blue-700 hover:to-blue-900 transition-colors font-medium"
+                            >
+                                Open Dashboard →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const promptInput = document.getElementById('prompt-input');
+        const sendBtn = document.getElementById('send-btn');
+        const statusBar = document.getElementById('status-bar');
+        const statusText = document.getElementById('status-text');
+
+        function showStatus(message, type = 'info') {
+            statusBar.className = `mt-4 p-4 rounded-lg ${
+                type === 'error' ? 'bg-red-100 text-red-800' :
+                type === 'success' ? 'bg-green-100 text-green-800' :
+                type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-blue-100 text-blue-800'
+            }`;
+            statusText.textContent = message;
+            statusBar.classList.remove('hidden');
+            setTimeout(() => statusBar.classList.add('hidden'), 5000);
+        }
+
+        function addMessage(content, isUser = true) {
+            // Clear welcome message
+            if (chatMessages.children.length === 1 && chatMessages.children[0].className.includes('text-center')) {
+                chatMessages.innerHTML = '';
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message flex ${isUser ? 'justify-end' : 'justify-start'}`;
+            
+            messageDiv.innerHTML = `
+                <div class="${isUser ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'} rounded-lg px-4 py-2 max-w-md">
+                    <p class="text-sm whitespace-pre-wrap">${escapeHtml(content)}</p>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function sendMessage(prompt) {
+            addMessage(prompt, true);
+            promptInput.value = '';
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        user_id: 'demo-user',
+                        session_id: 'demo-session-' + Date.now()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    addMessage(data.response, false);
+                    showStatus('✓ Response received and monitored', 'success');
+                } else {
+                    addMessage(`Error: ${data.error}`, false);
+                    showStatus('⚠ Error occurred', 'error');
+                }
+            } catch (error) {
+                addMessage(`Connection error: ${error.message}`, false);
+                showStatus('⚠ Connection failed', 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+            }
+        }
+
+        async function simulateAttack(attackType) {
+            showStatus(`🚨 Simulating ${attackType.replace('_', ' ')} attack...`, 'warning');
+
+            try {
+                const response = await fetch(`/api/attack/${attackType}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: 'demo-user',
+                        session_id: `attack-${attackType}-${Date.now()}`
+                    })
+                });
+
+                const data = await response.json();
+
+                addMessage(`[${data.scenario}] ${data.prompt}`, true);
+                
+                if (response.ok) {
+                    addMessage(data.response || data.message, false);
+                    showStatus('✓ Attack detected! Check dashboard for threat analysis', 'warning');
+                } else {
+                    addMessage(data.error || data.message, false);
+                    showStatus('⚠ Attack may have been blocked', 'error');
+                }
+            } catch (error) {
+                showStatus('⚠ Failed to simulate attack', 'error');
+            }
+        }
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const prompt = promptInput.value.trim();
+            if (prompt) {
+                sendMessage(prompt);
+            }
+        });
+
+        // Initial status
+        showStatus('✓ Connected to GuardianAI monitoring', 'success');
+    </script>
+</body>
+</html>
