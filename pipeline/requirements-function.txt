@@ -1,5 +1,6 @@
 # Cloud Function dependencies
 google-cloud-firestore==2.13.1
 google-cloud-pubsub==2.18.4
+google-cloud-aiplatform==1.38.0
 datadog==0.47.0
 functions-framework==3.5.0

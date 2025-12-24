@@ -12,6 +12,10 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    watch: {
+      // Ignore .env files to prevent infinite restart loop
+      ignored: ['**/.env', '**/.env.*']
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:8000',

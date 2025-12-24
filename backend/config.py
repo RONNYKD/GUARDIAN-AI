@@ -10,6 +10,7 @@ Environment variables should be set in .env file or system environment.
 """
 
 import os
+from pathlib import Path
 from typing import Optional
 from functools import lru_cache
 from pydantic_settings import BaseSettings
@@ -132,11 +133,12 @@ class Settings(BaseSettings):
         alias="SLACK_ESCALATION_CHANNEL"
     )
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-        extra = "ignore"
+    model_config = {
+        "env_file": str(Path(__file__).parent / ".env"),
+        "env_file_encoding": "utf-8",
+        "case_sensitive": False,
+        "extra": "ignore"
+    }
 
 
 @lru_cache()

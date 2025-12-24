@@ -16,12 +16,12 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.config import get_settings
-from backend.api.health import router as health_router
-from backend.api.metrics import router as metrics_router
-from backend.api.incidents import router as incidents_router
-from backend.api.webhooks import router as webhooks_router
-from backend.api.demo import router as demo_router
+from config import get_settings
+from api.health import router as health_router
+from api.metrics import router as metrics_router
+from api.incidents import router as incidents_router
+from api.webhooks import router as webhooks_router
+from api.demo import router as demo_router
 
 # Configure logging
 logging.basicConfig(
@@ -43,6 +43,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     settings = get_settings()
     logger.info(f"Environment: {settings.dd_env}")
     logger.info(f"GCP Project: {settings.gcp_project_id}")
+    
+    # Set up Datadog monitors on startup
+    if settings.dd_env == "production":
+        try:
+            from services.datadog_monitors import get_monitor_manager
+            logger.info("Setting up Datadog monitors...")
+            monitor_manager = get_monitor_manager()
+            monitors = monitor_manager.setup_all_monitors()
+            logger.info(f"Datadog monitors configured: {monitors}")
+        except Exception as e:
+            logger.error(f"Failed to set up Datadog monitors: {e}")
+            logger.warning("Continuing without monitors - they can be set up manually")
     
     yield
     

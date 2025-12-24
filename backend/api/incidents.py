@@ -15,8 +15,8 @@ from enum import Enum
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from pydantic import BaseModel, Field
 
-from backend.config import get_settings, Settings
-from backend.services.firestore_client import get_firestore_client
+from config import get_settings, Settings
+from services.firestore_client import get_firestore_client
 
 router = APIRouter()
 

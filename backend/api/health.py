@@ -13,7 +13,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from backend.config import get_settings, Settings
+from config import get_settings, Settings
 
 router = APIRouter()
 
@@ -53,7 +53,7 @@ async def health_check(
     
     # Check Firestore connectivity
     try:
-        from backend.services.firestore_client import get_firestore_client
+        from services.firestore_client import get_firestore_client
         client = get_firestore_client()
         # Simple connectivity check
         components["firestore"] = {

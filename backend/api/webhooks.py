@@ -18,8 +18,8 @@ from typing import Any, Optional
 from fastapi import APIRouter, Request, HTTPException, Header
 from pydantic import BaseModel, Field
 
-from backend.config import get_settings
-from backend.services.firestore_client import get_firestore_client
+from config import get_settings
+from services.firestore_client import get_firestore_client
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +90,80 @@ def extract_threat_type_from_title(title: Optional[str]) -> str:
         return "generic"
 
 
+async def analyze_incident_with_gemini(
+    incident_data: dict[str, Any],
+    recent_telemetry: list[dict[str, Any]],
+    threat_type: str
+) -> dict[str, Any]:
+    """
+    Use Vertex AI Gemini to analyze incident and generate remediation recommendations.
+    
+    Implements Requirement 8.4: Root cause analysis with AI-powered recommendations.
+    
+    Args:
+        incident_data: The incident details
+        recent_telemetry: Recent telemetry records for context
+        threat_type: Type of threat detected
+    
+    Returns:
+        Dictionary with root_cause, recommendations, and analysis
+    """
+    try:
+        # Import Gemini analyzer
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
+        from pipeline.gemini_analyzer import GeminiAnalyzer
+        
+        analyzer = GeminiAnalyzer()
+        
+        # Prepare context for Gemini
+        context = {
+            "incident_type": threat_type,
+            "severity": incident_data.get("severity"),
+            "title": incident_data.get("title"),
+            "description": incident_data.get("description"),
+            "recent_patterns": [
+                {
+                    "request_type": t.get("request", {}).get("type", "unknown"),
+                    "model": t.get("request", {}).get("model", "unknown"),
+                    "cost": t.get("metadata", {}).get("cost", 0),
+                    "latency": t.get("metadata", {}).get("latency_ms", 0)
+                }
+                for t in recent_telemetry[:5]
+            ]
+        }
+        
+        # Call Gemini for analysis
+        recommendations = analyzer.generate_remediation_recommendations(
+            incident_data=incident_data,
+            context=context
+        )
+        
+        return {
+            "root_cause": recommendations.root_cause,
+            "recommendations": recommendations.recommended_actions,
+            "priority": recommendations.priority,
+            "estimated_impact": recommendations.estimated_impact,
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    
+    except Exception as e:
+        logger.error(f"Failed to run Gemini analysis: {e}")
+        # Return basic fallback recommendations
+        return {
+            "root_cause": f"Unknown - Gemini analysis failed: {str(e)}",
+            "recommendations": [
+                "Review recent system metrics in Datadog",
+                "Check application logs for errors",
+                "Verify API connectivity and quotas"
+            ],
+            "priority": "medium",
+            "estimated_impact": "Unknown",
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+
 @router.post("/datadog/alert", response_model=WebhookResponse)
 async def handle_datadog_alert(
     request: Request,
@@ -155,15 +229,25 @@ async def handle_datadog_alert(
     try:
         recent_telemetry = db.get_recent_telemetry(limit=10)
         
-        # Update incident with context
+        # Use Gemini to analyze root cause and generate recommendations (Requirement 8.4)
+        gemini_analysis = await analyze_incident_with_gemini(
+            incident_data=incident_data,
+            recent_telemetry=recent_telemetry,
+            threat_type=threat_type
+        )
+        
+        # Update incident with context and Gemini analysis
         db.update_incident(incident_id, {
             "context": {
                 "recent_telemetry_count": len(recent_telemetry),
                 "trace_ids": [t.get("trace_id") for t in recent_telemetry[:10]]
-            }
+            },
+            "gemini_analysis": gemini_analysis,
+            "root_cause": gemini_analysis.get("root_cause", "Unknown"),
+            "recommended_actions": gemini_analysis.get("recommendations", [])
         })
     except Exception as e:
-        logger.warning(f"Failed to fetch telemetry context: {e}")
+        logger.warning(f"Failed to fetch telemetry context or run Gemini analysis: {e}")
     
     # Trigger auto-remediation based on threat type
     remediation_result = await trigger_auto_remediation(

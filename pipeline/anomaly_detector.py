@@ -13,6 +13,12 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 from enum import Enum
 
+try:
+    from config import get_config
+    _config_available = True
+except ImportError:
+    _config_available = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -105,14 +111,6 @@ class AnomalyDetector:
         >>> anomalies = detector.check_value("latency_ms", 5500.0)
     """
     
-    # Detection thresholds from requirements
-    THRESHOLDS = {
-        "cost_anomaly_tokens_per_hour": 400000,
-        "quality_degradation": 0.7,
-        "latency_spike_p95_ms": 5000,
-        "error_rate_percent": 5.0,
-    }
-    
     def __init__(
         self,
         window_size: int = 1000,
@@ -130,6 +128,26 @@ class AnomalyDetector:
         self.window_size = window_size
         self.z_score_threshold = z_score_threshold
         self.min_samples = min_samples
+        
+        # Load thresholds from config if available
+        if _config_available:
+            config = get_config()
+            self.THRESHOLDS = {
+                "cost_anomaly_tokens_per_hour": 400000,
+                "cost_anomaly_usd": config.thresholds.cost_anomaly_threshold_usd,
+                "quality_degradation": config.thresholds.quality_degradation_threshold,
+                "latency_spike_p95_ms": config.thresholds.latency_spike_threshold_ms,
+                "error_rate_percent": config.thresholds.error_rate_threshold * 100,
+            }
+        else:
+            # Fallback thresholds
+            self.THRESHOLDS = {
+                "cost_anomaly_tokens_per_hour": 400000,
+                "cost_anomaly_usd": 400000.0,
+                "quality_degradation": 0.7,
+                "latency_spike_p95_ms": 5000,
+                "error_rate_percent": 5.0,
+            }
         
         self._windows: dict[str, deque] = {}
         self._baselines: dict[str, Baseline] = {}
@@ -254,6 +272,18 @@ class AnomalyDetector:
     ) -> list[DetectedAnomaly]:
         """Check value against absolute thresholds."""
         anomalies = []
+        
+        # Cost threshold (USD)
+        if metric_name == "cost_usd" and value > self.THRESHOLDS["cost_anomaly_usd"]:
+            anomalies.append(DetectedAnomaly(
+                anomaly_type=AnomalyType.COST_SPIKE,
+                severity="critical",
+                current_value=value,
+                expected_value=self.THRESHOLDS["cost_anomaly_usd"],
+                deviation=value / self.THRESHOLDS["cost_anomaly_usd"],
+                description=f"Cost ${value:,.2f} exceeds threshold ${self.THRESHOLDS['cost_anomaly_usd']:,.2f}",
+                trace_id=trace_id,
+            ))
         
         # Latency threshold
         if metric_name == "latency_ms" and value > self.THRESHOLDS["latency_spike_p95_ms"]:

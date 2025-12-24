@@ -18,7 +18,7 @@ from datadog import initialize as dd_initialize
 from datadog import api as dd_api
 from datadog import statsd
 
-from backend.config import get_settings
+from config import get_settings
 
 logger = logging.getLogger(__name__)
 

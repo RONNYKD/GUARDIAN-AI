@@ -12,7 +12,7 @@ import logging
 from google.cloud import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 
-from backend.config import get_settings
+from config import get_settings
 
 logger = logging.getLogger(__name__)
 

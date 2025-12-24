@@ -14,7 +14,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 
-from backend.config import get_settings, Settings
+from config import get_settings, Settings
 
 router = APIRouter()
 
