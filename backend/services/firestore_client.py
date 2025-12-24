@@ -12,7 +12,7 @@ import logging
 from google.cloud import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 
-from config import get_settings
+from config import get_settings, get_gcp_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,17 @@ class FirestoreClient:
         """Initialize Firestore client if not already initialized."""
         if FirestoreClient._db is None:
             settings = get_settings()
-            FirestoreClient._db = firestore.Client(project=settings.gcp_project_id)
+            credentials = get_gcp_credentials()
+            
+            if credentials:
+                FirestoreClient._db = firestore.Client(
+                    project=settings.gcp_project_id,
+                    credentials=credentials
+                )
+            else:
+                # Use default credentials (for local dev with gcloud)
+                FirestoreClient._db = firestore.Client(project=settings.gcp_project_id)
+            
             logger.info(f"Firestore client initialized for project: {settings.gcp_project_id}")
 
     @property

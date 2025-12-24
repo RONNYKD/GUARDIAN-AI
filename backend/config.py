@@ -10,6 +10,7 @@ Environment variables should be set in .env file or system environment.
 """
 
 import os
+import json
 from pathlib import Path
 from typing import Optional
 from functools import lru_cache
@@ -30,6 +31,11 @@ class Settings(BaseSettings):
         default=None,
         alias="GOOGLE_APPLICATION_CREDENTIALS",
         description="Path to GCP service account key JSON file"
+    )
+    google_application_credentials_json: Optional[str] = Field(
+        default=None,
+        alias="GOOGLE_APPLICATION_CREDENTIALS_JSON",
+        description="GCP service account key JSON content (for cloud deployment)"
     )
 
     # Datadog Configuration
@@ -154,6 +160,35 @@ def get_settings() -> Settings:
         >>> print(settings.gcp_project_id)
     """
     return Settings()
+
+
+def get_gcp_credentials():
+    """
+    Get GCP credentials from either file path or JSON string.
+    
+    Returns:
+        google.oauth2.service_account.Credentials or None
+    """
+    from google.oauth2 import service_account
+    
+    settings = get_settings()
+    
+    # Try to load from JSON string first (for cloud deployment like Render)
+    if settings.google_application_credentials_json:
+        try:
+            credentials_dict = json.loads(settings.google_application_credentials_json)
+            return service_account.Credentials.from_service_account_info(credentials_dict)
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error loading credentials from JSON: {e}")
+    
+    # Fall back to file path (for local development)
+    if settings.google_application_credentials and os.path.exists(settings.google_application_credentials):
+        return service_account.Credentials.from_service_account_file(
+            settings.google_application_credentials
+        )
+    
+    # Use default credentials as last resort
+    return None
 
 
 # Convenience accessors for common settings
