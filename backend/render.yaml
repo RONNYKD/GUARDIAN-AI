@@ -11,6 +11,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.0
+      - key: POETRY_VERSION
+        value: ""
       - key: GCP_PROJECT_ID
         sync: false
       - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
