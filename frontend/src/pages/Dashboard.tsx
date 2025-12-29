@@ -10,7 +10,6 @@ import {
   Zap,
   Target,
   ArrowUp,
-  ArrowDown,
   Minus,
   TrendingDown
 } from 'lucide-react'
@@ -366,4 +365,4 @@ function getThreatIcon(type: string): string {
   };
   return icons[type] || '⚠️';
 }
-
+
