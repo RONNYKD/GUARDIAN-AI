@@ -106,7 +106,7 @@ export default function Demo() {
         body: JSON.stringify({ attack_type: selectedAttack, count: attackCount }),
       });
       if (res.ok) {
-        const data = await res.json();
+        await res.json();
         setLastMessage(`✅ Launched ${attackCount}x ${selectedAttack} attacks!`);
         setTimeout(() => setLastMessage(''), 3000);
       }
