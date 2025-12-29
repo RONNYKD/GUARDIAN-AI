@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Rocket, Target, Zap, AlertTriangle, DollarSign, Activity, Trash2 } from 'lucide-react';
 import { useCountUp } from '../hooks/useCountUp';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const ATTACK_TYPES = [
   { id: 'normal', name: 'Normal Request', icon: '✓' },

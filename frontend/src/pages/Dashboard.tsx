@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { useCountUp } from '../hooks/useCountUp'
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 interface MetricsSummary {
   total_requests_24h: number;
