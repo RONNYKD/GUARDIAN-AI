@@ -1,17 +1,27 @@
 # GuardianAI Deployment Guide
 
-## Free Hosting Setup: Vercel (Frontend) + Render (Backend)
+## Free Hosting Setup: Render.com (Both Frontend & Backend)
+
+### Why Render?
+- ✅ **One platform** for both services
+- ✅ **Completely FREE** forever
+- ✅ Auto-deploy from GitHub
+- ✅ Free SSL certificates
+- ✅ Custom domains supported
+- ✅ 750 hours/month (enough for 24/7 backend)
+- ✅ Unlimited static site hosting
 
 ---
 
-## 🚀 Backend Deployment (Render)
+## 🚀 Part 1: Backend Deployment (Render Web Service)
 
 ### Step 1: Create Render Account
 1. Go to https://render.com
-2. Sign up with your GitHub account
-3. Authorize Render to access your repositories
+2. Click **"Get Started for Free"**
+3. Sign up with your **GitHub account**
+4. Authorize Render to access your repositories
 
-### Step 2: Deploy Backend
+### Step 2: Deploy Backend Web Service
 1. Click **"New +"** → **"Web Service"**
 2. Connect your **GUARDIAN-AI** repository
 3. Configure the service:
@@ -59,25 +69,20 @@ https://guardianai-backend.onrender.com
 
 ---
 
-## 🎨 Frontend Deployment (Vercel)
+## 🎨 Part 2: Frontend Deployment (Render Static Site)
 
-### Step 1: Create Vercel Account
-1. Go to https://vercel.com
-2. Sign up with your GitHub account
-3. Authorize Vercel to access your repositories
-
-### Step 2: Deploy Frontend
-1. Click **"Add New"** → **"Project"**
-2. Import your **GUARDIAN-AI** repository
-3. Configure the project:
-   - **Framework Preset:** Vite
+### Step 1: Create Static Site
+1. In the same Render dashboard, click **"New +"** → **"Static Site"**
+2. Connect your **GUARDIAN-AI** repository (already authorized)
+3. Configure the static site:
+   - **Name:** `guardianai-frontend`
+   - **Branch:** `main`
    - **Root Directory:** `frontend`
    - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-   - **Install Command:** `npm install`
+   - **Publish Directory:** `dist`
 
-### Step 3: Set Environment Variables on Vercel
-In the Vercel dashboard, go to **Settings** → **Environment Variables** and add:
+### Step 2: Set Environment Variables
+In the static site settings, go to **Environment** tab and add:
 
 ```bash
 VITE_API_BASE_URL=https://guardianai-backend.onrender.com/api
@@ -94,15 +99,17 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
 
-### Step 4: Deploy
-Click **"Deploy"** and wait for build to complete.
+**⚠️ Important:** Replace the `VITE_API_BASE_URL` with your actual backend URL from Step 1.
+
+### Step 3: Deploy
+Click **"Create Static Site"** and wait for build to complete (2-3 minutes).
 
 Your frontend will be live at:
 ```
-https://guardianai-platform.vercel.app
+https://guardianai-frontend.onrender.com
 ```
 
-Or use a custom domain!
+**✨ Bonus:** Add a custom domain in Settings → Custom Domain (free!)
 
 ---
 
@@ -113,51 +120,53 @@ Or use a custom domain!
 2. Add your Vercel domain to **Authorized domains**:
    ```
    guardianai-platform.vercel.app
+   ```Render domain to **Authorized domains**:
+   ```
+   guardianai-frontend.onrender.com
    ```
 
-### 2. Update CORS on Backend
-The backend should allow requests from your Vercel domain. This is already configured in `main.py` with:
+### 2. Update CORS on Backend (Optional)
+The backend is already configured in `main.py` with:
 ```python
-allow_origins=["*"]  # Change to specific domain in production
+allow_origins=["*"]  # Allows all domains
 ```
 
-For production, update to:
+For better security in production, update to:
 ```python
 allow_origins=[
-    "https://guardianai-platform.vercel.app",
-    "http://localhost:3000"  # Keep for local development
-]
-```
+    "https://guardianai-frontend.onrender.com
 
 ### 3. Test the Deployment
-1. Visit your Vercel URL
+1. Visit your Render frontend URL: `https://guardianai-frontend.onrender.com`
 2. Test login with Firebase Auth
 3. Check Dashboard loads metrics
 4. Try Demo Mode attack simulation
 5. View Threats page
+6. ✅ Everything should work seamlessly!
 
 ---
 
-## 📊 Monitoring
+## 📊 Monitoring (All in Render Dashboard)
 
-### Vercel Analytics
-- Automatically enabled for deployments
-- View in Vercel dashboard → Analytics
+### Backend Logs
+1. Go to Render Dashboard → **guardianai-backend** → **Logs**
+2. Monitor API requests in real-time
+3. Check for errors and performance
 
-### Render Logs
-- View in Render dashboard → Logs
-- Monitor backend API requests
-- Check for errors
+### Frontend Deploys
+1. Go to Render Dashboard → **guardianai-frontend** → **Events**
+2. View build logs
+3. Check deployment status
 
 ### Datadog (Optional)
 - Already integrated in backend
-- Configure Datadog API keys in Render environment variables
+- Configure Datadog API keys in Render environment variables for advanced monitoring
 
 ---
 
 ## 🔄 Continuous Deployment
 
-Both Vercel and Render auto-deploy when you push to GitHub:
+Both services auto-deploy when you push to GitHub:
 
 ```bash
 git add .
@@ -165,34 +174,49 @@ git commit -m "Update feature"
 git push origin main
 ```
 
-- **Vercel:** Rebuilds frontend automatically
-- **Render:** Rebuilds backend automatically
+**What happens:**
+1. ⚡ Render detects the push
+2. 🏗️ Backend rebuilds (2-3 minutes)
+3. 🎨 Frontend rebuilds (2-3 minutes)
+4. ✅ Both services live with new changes
 
 ---
 
-## 💰 Free Tier Limits
+## 💰 Free Tier Limits (All on Render)
 
-### Vercel Free Tier:
-- ✅ Unlimited personal projects
-- ✅ 100GB bandwidth/month
+### Static Site (Frontend):
+- ✅ **FREE forever**
+- ✅ Unlimited bandwidth
 - ✅ Automatic HTTPS
 - ✅ Custom domains
-- ✅ Instant rollbacks
+- ✅ Always online (no cold starts)
+- ✅ Global CDN
 
-### Render Free Tier:
-- ✅ 750 hours/month (enough for 1 service 24/7)
+### Web Service (Backend):
+- ✅ 750 hours/month (one service running 24/7)
 - ⚠️ Spins down after 15 min inactivity
+- ⚠️ Cold start: ~30 seconds (first request after idle)
 - ✅ 512 MB RAM
-- ✅ Shared CPU
-- ⚠️ Cold start: ~30 seconds
+- ✅ Shared CPBuild Fails:
+1. **Check environment variables:** Make sure all `VITE_*` variables are set in Render
+2. **Build command error:** Verify `npm run build` works locally
+3. **Wrong directory:** Ensure Root Directory is `frontend` and Publish Directory is `dist`
 
----
+### Frontend Can't Connect to Backend:
+1. **Check VITE_API_BASE_URL:** Should be `https://guardianai-backend.onrender.com/api`
+2. **Backend not running:** Visit backend URL directly, wait for cold start
+3. **CORS error:** Check `main.py` allows your frontend domain
 
-## 🚨 Troubleshooting
+### Backend Won't Start:
+1. **Check logs:** Render Dashboard → guardianai-backend → Logs
+2. **Import errors:** Verify all dependencies in `requirements.txt`
+3. **Firestore errors:** Check GCP credentials JSON is valid (no extra quotes)
+4. **Port binding:** Ensure start command uses `--port $PORT`
 
-### Frontend Issues:
-1. **Build fails:** Check environment variables are set
-2. **API not responding:** Verify VITE_API_BASE_URL is correct
+### Backend Cold Starts (Normal):
+- First request after 15 min idle takes ~30 seconds
+- This is expected on free tier
+- Solution: Upgrade to paid plan ($7/mo) for always-on service
 3. **Auth not working:** Check Firebase authorized domains
 
 ### Backend Issues:
@@ -203,29 +227,50 @@ git push origin main
 
 ### Backend Code Fix for Render:
 Update `backend/config.py` to load credentials from environment variable:
+**Backend (5 minutes):**
+- [ ] Create Render account with GitHub
+- [ ] New + → Web Service → Connect GUARDIAN-AI repo
+- [ ] Configure: Root=`backend`, Build=`pip install -r requirements.txt`, Start=`uvicorn main:app --host 0.0.0.0 --port $PORT`
+- [ ] Set environment variables (GCP credentials JSON, Datadog keys)
+- [ ] Wait for deploy → Copy backend URL
 
-```python
-import json
-import os
-from google.oauth2 import service_account
+**Frontend (3 minutes):**
+- [ ] New + → Static Site → Connect GUARDIAN-AI repo
+- [ ] Configure: Root=`frontend`, Build=`npm run build`, Publish=`dist`
+- [ ] Set environment variables (VITE_API_BASE_URL + Firebase config)
+- [ ] Wait for deploy → Copy frontend URL
 
-# Load credentials from environment variable
-credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
-if credentials_json:
-    credentials_dict = json.loads(credentials_json)
-    credentials = service_account.Credentials.from_service_account_info(credentials_dict)
-```
+**Post-Deploy (2 minutes):**
+- [ ] Add frontend domain to Firebase authorized domains
+- [ ] Test login, dashboard, demo mode, threats
+- [ ] Update README with live URLs
+- [ ] Share on Devpost! 🎉
 
 ---
 
-## 📝 Quick Deployment Checklist
+## 🎉 Done!
 
-- [ ] Create Render account
-- [ ] Deploy backend to Render
-- [ ] Set Render environment variables (GCP credentials, Datadog keys)
-- [ ] Get backend URL from Render
-- [ ] Create Vercel account
-- [ ] Deploy frontend to Vercel
+Your GuardianAI platform is now live and **completely FREE** on Render!
+
+**Live URLs:**
+- 🎨 Frontend: `https://guardianai-frontend.onrender.com`
+- ⚡ Backend: `https://guardianai-backend.onrender.com`
+- 📚 API Docs: `https://guardianai-backend.onrender.com/docs`
+
+**All on ONE platform - Render.com!** 🚀
+
+---
+
+## 🎯 Why This Setup is Perfect
+
+✅ **One Account:** Manage both services in one dashboard  
+✅ **One Platform:** No need to juggle Vercel + Render  
+✅ **Free Forever:** Both services stay free permanently  
+✅ **Auto-Deploy:** Push to GitHub = instant deployment  
+✅ **Professional:** Custom domains, SSL, monitoring included  
+✅ **Simple:** Easiest deployment for hackathons/demos  
+
+Share your GuardianAI platform link on Devpost and win! 🏆
 - [ ] Set Vercel environment variables (API URL, Firebase config)
 - [ ] Add Vercel domain to Firebase authorized domains
 - [ ] Test login, dashboard, demo mode
