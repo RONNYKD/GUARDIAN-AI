@@ -51,13 +51,17 @@ class FirestoreClient:
             if credentials:
                 FirestoreClient._db = firestore.Client(
                     project=settings.gcp_project_id,
-                    credentials=credentials
+                    credentials=credentials,
+                    database="guardianai"
                 )
             else:
                 # Use default credentials (for local dev with gcloud)
-                FirestoreClient._db = firestore.Client(project=settings.gcp_project_id)
+                FirestoreClient._db = firestore.Client(
+                    project=settings.gcp_project_id,
+                    database="guardianai"
+                )
             
-            logger.info(f"Firestore client initialized for project: {settings.gcp_project_id}")
+            logger.info(f"Firestore client initialized for project: {settings.gcp_project_id}, database: guardianai")
 
     @property
     def db(self) -> firestore.Client:
