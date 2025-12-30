@@ -28,7 +28,7 @@ from config import get_settings
 from services.firestore_client import get_firestore_client
 
 
-router = APIRouter(prefix="/api/demo", tags=["demo"])
+router = APIRouter(tags=["demo"])
 
 # Global state for tracking running scenarios
 _running_scenarios: Dict[str, Dict[str, Any]] = {}
