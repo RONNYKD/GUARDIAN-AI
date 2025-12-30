@@ -382,7 +382,7 @@ async def _store_demo_records(records: List[Dict[str, Any]]):
         
         # Store each record in telemetry collection
         for record in records:
-            doc_ref = db.db.collection(settings.firestore_collection_telemetry).document(record["trace_id"])
+            doc_ref = db.db.collection(settings.telemetry_collection).document(record["trace_id"])
             doc_ref.set(record)
     
     except Exception as e:
@@ -458,7 +458,7 @@ async def _calculate_demo_stats() -> Dict[str, Any]:
         db = get_firestore_client()
         
         # Query all demo records
-        demo_query = db.db.collection(settings.firestore_collection_telemetry).where(
+        demo_query = db.db.collection(settings.telemetry_collection).where(
             "metadata.demo_mode", "==", True
         ).stream()
         
@@ -541,7 +541,7 @@ async def _delete_demo_records() -> int:
         db = get_firestore_client()
         
         # Query all demo records
-        demo_query = db.db.collection(settings.firestore_collection_telemetry).where(
+        demo_query = db.db.collection(settings.telemetry_collection).where(
             "metadata.demo_mode", "==", True
         ).stream()
         
